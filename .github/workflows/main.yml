@@ -63,4 +63,33 @@ jobs:
         with:
           name: build-logs
           path: app/build/reports/
+          retention-days: 7            'zipStorePath=wrapper/dists' \
+            > gradle/wrapper/gradle-wrapper.properties
+          echo "Properties OK:"
+          cat gradle/wrapper/gradle-wrapper.properties
+
+      - name: Accept Android licenses
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: WAGLO-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      - name: Upload logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-logs
+          path: app/build/reports/
           retention-days: 7
