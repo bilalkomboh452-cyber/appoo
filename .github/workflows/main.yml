@@ -24,17 +24,9 @@ jobs:
       - name: Download Gradle wrapper
         run: |
           mkdir -p gradle/wrapper
-
-          curl -fsSL \
-            https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar \
-            -o gradle/wrapper/gradle-wrapper.jar
-
-          curl -fsSL \
-            https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradlew \
-            -o gradlew
-
+          curl -fsSL https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          curl -fsSL https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradlew -o gradlew
           chmod +x gradlew
-
           printf '%s\n' \
             'distributionBase=GRADLE_USER_HOME' \
             'distributionPath=wrapper/dists' \
@@ -44,31 +36,15 @@ jobs:
             'zipStoreBase=GRADLE_USER_HOME' \
             'zipStorePath=wrapper/dists' \
             > gradle/wrapper/gradle-wrapper.properties
-
-          echo "=== gradle-wrapper.properties ==="
+          echo "Properties OK:"
           cat gradle/wrapper/gradle-wrapper.properties
-          echo "=== gradlew ==="
-          ls -lh gradlew
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-waglo-v1
-          restore-keys: gradle-waglo-
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept licenses and install SDK
+      - name: Accept Android licenses
         run: |
-          yes | sdkmanager --licenses 2>/dev/null || true
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - name: Create local.properties
-        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
@@ -85,6 +61,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: build-failure-logs
+          name: build-logs
           path: app/build/reports/
           retention-days: 7
